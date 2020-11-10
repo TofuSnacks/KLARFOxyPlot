@@ -1,0 +1,33 @@
+﻿<Window x:Class="KLARFOxyPlot.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:oxy="http://oxyplot.org/wpf"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KLARFOxyPlot"
+   Title = "MainWindow" Height = "600" Width = "700">
+
+    <Grid>
+        <Grid.Resources>
+            <Style TargetType="DataGridCell">
+                <Style.Triggers>
+                    <Trigger Property="DataGridCell.IsSelected" Value="True">
+                        <Setter Property="Background" Value="#257AFD" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
+
+        <Button Name="GetFile" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_Click" Width="180" Height="40" Margin="10,101,0,0"/>
+        <Button Name="PopOut" Content="Pop Graph Out" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickPop" Width="180" Height="40" Margin="10,182,0,0" IsEnabled="False"/>
+        <Viewbox Margin="160,0,0,220" Stretch="Uniform">
+            <WpfPlot Name="MainPlot" Height="420" Width="420" MouseDoubleClick="plotMouseDoubleClick" />
+
+        </Viewbox>
+        <DataGrid x:Name="DGrid" Margin="0,369,0,0" AutoGenerateColumns="True" ItemsSource="{Binding}" />
+        <Button x:Name="LoadConfig" Content="Load Config File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickConfig" Width="180" Height="40" Margin="10,28,0,0" IsEnabled="True"/>
+        <Button x:Name="ClearButton" Content="Clear the Graph" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickClear" Width="180" Height="40" Margin="10,267,0,0" IsEnabled="True"/>
+
+    </Grid>
+
+</Window> 
+

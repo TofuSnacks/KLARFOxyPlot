@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;x86</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CenterSpace.NMath" Version="6.2.0.58" />
+    <PackageReference Include="CenterSpace.NMath.Standard.Windows.X86" Version="7.1.0.21" />
+    <PackageReference Include="CenterSpace.NMath.Stats" Version="4.2.0.58" />
+    <PackageReference Include="ScottPlot.WPF" Version="4.0.42" />
+  </ItemGroup>
+
+</Project>
