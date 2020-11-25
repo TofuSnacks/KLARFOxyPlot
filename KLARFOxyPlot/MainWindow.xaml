@@ -17,15 +17,19 @@
             </Style>
         </Grid.Resources>
 
-        <Button Name="GetFile" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_Click" Width="180" Height="40" Margin="10,101,0,0"/>
-        <Button Name="PopOut" Content="Pop Graph Out" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickPop" Width="180" Height="40" Margin="10,182,0,0" IsEnabled="False"/>
-        <Viewbox Margin="160,0,0,220" Stretch="Uniform">
+        <Button Name="GetFile" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_Click" Width="180" Height="40" Margin="10,64,0,0"/>
+        <Button Name="PopOut" Content="Pop Graph Out" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickPop" Width="180" Height="40" Margin="10,121,0,0" IsEnabled="False"/>
+        <Viewbox Margin="160,0,0,215" Stretch="Uniform">
             <WpfPlot Name="MainPlot" Height="420" Width="420" MouseDoubleClick="plotMouseDoubleClick" />
 
         </Viewbox>
         <DataGrid x:Name="DGrid" Margin="0,369,0,0" AutoGenerateColumns="True" ItemsSource="{Binding}" />
-        <Button x:Name="LoadConfig" Content="Load Config File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickConfig" Width="180" Height="40" Margin="10,28,0,0" IsEnabled="True"/>
-        <Button x:Name="ClearButton" Content="Clear the Graph" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickClear" Width="180" Height="40" Margin="10,267,0,0" IsEnabled="True"/>
+        <Button x:Name="LoadConfig" Content="Load Config File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickConfig" Width="180" Height="40" Margin="10,10,0,0" IsEnabled="True"/>
+        <Button x:Name="ClearButton" Content="Clear the Graph" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickClear" Width="180" Height="40" Margin="10,185,0,0" IsEnabled="True"/>
+        <TextBlock HorizontalAlignment="Left" Margin="10,243,0,0" Text="XOffset:" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" Height="20"/>
+        <TextBox x:Name="XOffsetBox"  HorizontalAlignment="Left" Height="20" Margin="57,243,0,0" Text="0" TextWrapping="Wrap" VerticalAlignment="Top" Width="133" TextChanged="XOffsetBox_TextChanged" />
+        <TextBlock HorizontalAlignment="Left" Margin="10,272,0,0" Text="YOffset:" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" Height="20"/>
+        <TextBox x:Name="YOffsetBox"  HorizontalAlignment="Left" Height="20" Margin="57,272,0,0" Text="0" TextWrapping="Wrap" VerticalAlignment="Top" Width="133" TextChanged="YOffsetBox_TextChanged"/>
 
     </Grid>
 

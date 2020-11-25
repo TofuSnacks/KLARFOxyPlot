@@ -18,6 +18,8 @@ namespace KLARFOxyPlot
         public double xCenter;
         public double yCenter;
         public double totalClassLookup;
+        public double waferSize;
+        public double notch;
         public DataGrabber(string loadFileName)
         {
             fileName = loadFileName;
@@ -55,7 +57,31 @@ namespace KLARFOxyPlot
                 {
                     totalClassLookup = Double.Parse(splitString[1]);
                 }
+                else if (lines[i].Contains("SampleSize "))
+                {
+                    waferSize = Double.Parse(splitString[2]) * 1000;
+                }
+                else if (lines[i].Contains("OrientationMarkLocation "))
+                {
+                    String n = splitString[1];
 
+                    if(n.Contains("UP"))
+                    {
+                        notch = (Math.PI / 180) * 0;
+                    }
+                    else if(n.Contains("RIGHT"))
+                    {
+                        notch = (Math.PI / 180) * 90;
+                    }
+                    else if (n.Contains("DOWN"))
+                    {
+                        notch = (Math.PI / 180) * 180;
+                    }
+                    else if (n.Contains("LEFT"))
+                    {
+                        notch = (Math.PI / 180) * 270;
+                    }
+                }
                 splitString = splitString.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
 
                 //Creates the column variables
@@ -150,7 +176,6 @@ namespace KLARFOxyPlot
             {
                 colX.Add((double)df[df.IndexOfColumn("XINDEX")][i] * xDiePit - xDieOri + (double)df[df.IndexOfColumn("XREL")][i]);
                 colY.Add((double)df[df.IndexOfColumn("YINDEX")][i] * yDiePit - yDieOri + (double)df[df.IndexOfColumn("YREL")][i]);
-
             }
 
             df.AddColumn(colX);

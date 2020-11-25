@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Text.RegularExpressions;
 
 namespace KLARFOxyPlot
 {
@@ -16,6 +17,9 @@ namespace KLARFOxyPlot
         public DataTable dtb;
         public ConfigGrabber confg;
         ScottPlot.PlottableScatterHighlight sph;
+        public double xOffset = 0;
+        public double yOffset = 0;
+
 
         public MainWindow()
         {
@@ -35,7 +39,7 @@ namespace KLARFOxyPlot
 
         private void btnOpenFile_ClickPop(object sender, RoutedEventArgs e)
         {
-            grap = new GraphWindow(dgrab, MainPlot, confg);
+            grap = new GraphWindow(dgrab, MainPlot, confg, xOffset, yOffset);
             grap.Show();
             //Changes our datagrid size for better viewing
             DGrid.Margin = new System.Windows.Thickness(0, 150, 0, 0);
@@ -64,6 +68,7 @@ namespace KLARFOxyPlot
                 DGrid.Margin = new System.Windows.Thickness(0, 369, 0, 0);
 
                 createScatterPlot();
+                MainPlot.Render();
 
                 dtb = dgrab.df.ToDataTable();
                 DGrid.DataContext = dtb;
@@ -77,6 +82,7 @@ namespace KLARFOxyPlot
             //Resets our datagrid size since the user may want to look at the graph
             DGrid.Margin = new System.Windows.Thickness(0, 369, 0, 0);
             DGrid.DataContext = null;
+            dgrab = null;
         }
 
 
@@ -88,9 +94,9 @@ namespace KLARFOxyPlot
             double[] col = dgrab.df[dgrab.df.IndexOfColumn("CLASSNUMBER")].ToDoubleArray();
 
             int pointsPerPolygon = 100;
-            int polyR = 150000;
-            double polyX = dgrab.xDieOri + dgrab.xCenter;
-            double polyY = dgrab.yDieOri + dgrab.yCenter;
+            double polyR = dgrab.waferSize/2; 
+            double polyX = dgrab.xDieOri + dgrab.xCenter + xOffset;
+            double polyY = dgrab.yDieOri + dgrab.yCenter + yOffset;
 
             int markSize = 10;
 
@@ -98,14 +104,23 @@ namespace KLARFOxyPlot
             double[] ys = Enumerable.Range(0, pointsPerPolygon).Select(x => polyR * Math.Sin(2.0 * Math.PI * x / pointsPerPolygon) + polyY).ToArray();
             MainPlot.plt.PlotPolygon(xs, ys, lineColor: System.Drawing.Color.Black, fillColor: System.Drawing.Color.DarkGray);
 
+            //This plots points that will be written over later. The reason we do this is because sph lets us highlight points we click on (and they need to be plotted this way)
             sph = MainPlot.plt.PlotScatterHighlight(X, Y, markerSize: markSize, lineWidth: 0, markerShape: MarkerShape.filledSquare);
 
+
+
+            double offsetCenterX = dgrab.xCenter + xOffset;
+            double offsetCenterY = dgrab.yCenter + yOffset;
+
+            double offsetDieOriX = dgrab.xDieOri;
+            double offsetDieOriY = dgrab.yDieOri;
+
             //Create the rectangles
-            for (double x = dgrab.xDieOri + dgrab.xCenter - 150000; x < dgrab.xDieOri + dgrab.xCenter + 150000; x = x + dgrab.xDiePit)
+            for (double x = offsetDieOriX + offsetCenterX - dgrab.waferSize / 2; x < offsetDieOriX + offsetCenterX + dgrab.waferSize / 2; x = x + dgrab.xDiePit)
             {
-                for (double y = dgrab.yDieOri + dgrab.yCenter - 150000; y < dgrab.yDieOri + dgrab.yCenter + 150000; y = y + dgrab.yDiePit)
-                {
-                    if (isWithin(dgrab.xCenter, dgrab.yCenter, x, y, dgrab.xDiePit, dgrab.yDiePit))
+                for (double y = offsetDieOriY + offsetCenterY - dgrab.waferSize / 2; y < offsetDieOriY + offsetCenterY + dgrab.waferSize / 2; y = y + dgrab.yDiePit)
+                { 
+                    if (isWithin(offsetCenterX, offsetCenterY, x, y, dgrab.xDiePit, dgrab.yDiePit))
                     {
                         MainPlot.plt.PlotPolygon(
                         xs: new double[] { x, x, x + dgrab.xDiePit, x + dgrab.xDiePit },
@@ -115,13 +130,21 @@ namespace KLARFOxyPlot
                     }
                 }
             }
+            //Draw the notch (WE DONT DRAW A TRIANGLE OR A SHAPE BECAUSE IT WOULD IMPLY THAT WE KNOW THE NOTCH SIZE WHICH WE DONT KNOW) 
+            MainPlot.plt.PlotArrow((dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Sin(dgrab.notch)  + offsetCenterX, 
+                                   (dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Cos(dgrab.notch)  + offsetCenterY,
+                                   (dgrab.waferSize / 2) * Math.Sin(dgrab.notch) + offsetCenterX,
+                                   (dgrab.waferSize / 2) * Math.Cos(dgrab.notch) + offsetCenterY) ;
 
-            //Draw the color on the points
+
+            //Draw the color on the points 
             for (int i = 0; i < X.Length; i++)
             {
                 int r = 0;
                 int b = 0;
                 int g = 0;
+                
+                //Creates our color (if we don't get information on what color to use)
                 HsvToRgb((int)col[i] % 125, 60, 45, out r, out g, out b);
 
                 if (confg != null)
@@ -146,7 +169,6 @@ namespace KLARFOxyPlot
         private void plotMouseDoubleClick(object sender, MouseEventArgs e)
         {
             (double mouseX, double mouseY) = MainPlot.GetMouseCoordinates();
-
             sph.HighlightClear();
             var (trackerX, trackerY, index) = sph.HighlightPointNearest(mouseX, mouseY);
 
@@ -170,12 +192,12 @@ namespace KLARFOxyPlot
         public string CurrentTrackerValue { get; set; }
 
 
-        public bool isWithin(double centerX, double centerY, double rectX, double rectY, double diePitX, double diePitY)
+        public bool isWithin(double centerX, double centerY, double rectX, double rectY, double diePitX, double diePitY) 
         {
-            bool dis1 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - rectY, 2)) < (150000.0 * 150000.0); //Is TRUE when we are in circle bounds
-            bool dis2 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - rectY, 2)) < (150000.0 * 150000.0);
-            bool dis3 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (150000.0 * 150000.0);
-            bool dis4 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (150000.0 * 150000.0);
+            bool dis1 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - rectY, 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2); //Is TRUE when we are in circle bounds
+            bool dis2 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - rectY, 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2);
+            bool dis3 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2);
+            bool dis4 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2);
 
             return dis1 && dis2 && dis3 && dis4;
         }
@@ -277,6 +299,28 @@ namespace KLARFOxyPlot
             if (i > 255) return 255;
             return i;
         }
+        
+        
+        private void XOffsetBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            Double.TryParse( XOffsetBox.Text, out xOffset);
+            if(dgrab != null)
+            {
+                MainPlot.plt.Clear();
+                createScatterPlot();
+                MainPlot.Render();
+            }
+        }
 
+        private void YOffsetBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            Double.TryParse(YOffsetBox.Text, out yOffset);
+            if (dgrab != null)
+            {
+                MainPlot.plt.Clear();
+                createScatterPlot();
+                MainPlot.Render();
+            }
+        }
     }
 }

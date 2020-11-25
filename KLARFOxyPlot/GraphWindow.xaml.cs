@@ -11,11 +11,16 @@ namespace KLARFOxyPlot
         DataGrabber dgrab;
         ScottPlot.PlottableScatterHighlight sph;
         ConfigGrabber confg;
+        double xOffset;
+        double yOffset;
+
 
         //For some reason, ScottPlot doesn't like their graphs being cloned so we have to make the graph all over again...
-        public GraphWindow(DataGrabber dgrabber, WpfPlot plt, ConfigGrabber confgg)
+        public GraphWindow(DataGrabber dgrabber, WpfPlot plt, ConfigGrabber confgg, double xOffsetIN, double yOffsetIN)
         {
             InitializeComponent();
+            xOffset = xOffsetIN;
+            yOffset = yOffsetIN;
             DataContext = this;
             dgrab = dgrabber;
             confg = confgg;
@@ -24,10 +29,10 @@ namespace KLARFOxyPlot
 
         public bool isWithin(double centerX, double centerY, double rectX, double rectY, double diePitX, double diePitY)
         {
-            bool dis1 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - rectY, 2)) < (150000.0 * 150000.0); //Is TRUE when we are in circle bounds
-            bool dis2 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - rectY, 2)) < (150000.0 * 150000.0);
-            bool dis3 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (150000.0 * 150000.0);
-            bool dis4 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (150000.0 * 150000.0);
+            bool dis1 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - rectY, 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2); //Is TRUE when we are in circle bounds
+            bool dis2 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - rectY, 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2);
+            bool dis3 = (Math.Pow(centerX - rectX, 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2);
+            bool dis4 = (Math.Pow(centerX - (rectX + diePitX), 2) + Math.Pow(centerY - (rectY + diePitY), 2)) < (dgrab.waferSize / 2 * dgrab.waferSize / 2);
 
             return dis1 && dis2 && dis3 && dis4;
         }
@@ -39,26 +44,33 @@ namespace KLARFOxyPlot
             double[] col = dgrab.df[dgrab.df.IndexOfColumn("CLASSNUMBER")].ToDoubleArray();
 
             int pointsPerPolygon = 100;
-            int polyR = 150000;
-            double polyX = dgrab.xDieOri + dgrab.xCenter;
-            double polyY = dgrab.yDieOri + dgrab.yCenter;
+            double polyR = dgrab.waferSize / 2;
+            double polyX = dgrab.xDieOri + dgrab.xCenter + xOffset;
+            double polyY = dgrab.yDieOri + dgrab.yCenter + yOffset;
 
             int markSize = 10;
 
             double[] xs = Enumerable.Range(0, pointsPerPolygon).Select(x => polyR * Math.Cos(2.0 * Math.PI * x / pointsPerPolygon) + polyX).ToArray();
             double[] ys = Enumerable.Range(0, pointsPerPolygon).Select(x => polyR * Math.Sin(2.0 * Math.PI * x / pointsPerPolygon) + polyY).ToArray();
-           
-            //Draws the wafer circle
             MainPlot.plt.PlotPolygon(xs, ys, lineColor: System.Drawing.Color.Black, fillColor: System.Drawing.Color.DarkGray);
 
+            //This plots points that will be written over later. The reason we do this is because sph lets us highlight points we click on (and they need to be plotted this way)
             sph = MainPlot.plt.PlotScatterHighlight(X, Y, markerSize: markSize, lineWidth: 0, markerShape: MarkerShape.filledSquare);
 
+
+
+            double offsetCenterX = dgrab.xCenter + xOffset;
+            double offsetCenterY = dgrab.yCenter + yOffset;
+
+            double offsetDieOriX = dgrab.xDieOri;
+            double offsetDieOriY = dgrab.yDieOri;
+
             //Create the rectangles
-            for (double x = dgrab.xDieOri + dgrab.xCenter - 150000; x < dgrab.xDieOri + dgrab.xCenter + 150000; x = x + dgrab.xDiePit)
+            for (double x = offsetDieOriX + offsetCenterX - dgrab.waferSize / 2; x < offsetDieOriX + offsetCenterX + dgrab.waferSize / 2; x = x + dgrab.xDiePit)
             {
-                for (double y = dgrab.yDieOri + dgrab.yCenter - 150000; y < dgrab.yDieOri + dgrab.yCenter + 150000; y = y + dgrab.yDiePit)
+                for (double y = offsetDieOriY + offsetCenterY - dgrab.waferSize / 2; y < offsetDieOriY + offsetCenterY + dgrab.waferSize / 2; y = y + dgrab.yDiePit)
                 {
-                    if (isWithin(dgrab.xCenter, dgrab.yCenter, x, y, dgrab.xDiePit, dgrab.yDiePit))
+                    if (isWithin(offsetCenterX, offsetCenterY, x, y, dgrab.xDiePit, dgrab.yDiePit))
                     {
                         MainPlot.plt.PlotPolygon(
                         xs: new double[] { x, x, x + dgrab.xDiePit, x + dgrab.xDiePit },
@@ -68,13 +80,21 @@ namespace KLARFOxyPlot
                     }
                 }
             }
+            //Draw the notch (WE DONT DRAW A TRIANGLE OR A SHAPE BECAUSE IT WOULD IMPLY THAT WE KNOW THE NOTCH SIZE WHICH WE DONT KNOW) 
+            MainPlot.plt.PlotArrow((dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Sin(dgrab.notch) + offsetCenterX,
+                                   (dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Cos(dgrab.notch) + offsetCenterY,
+                                   (dgrab.waferSize / 2) * Math.Sin(dgrab.notch) + offsetCenterX,
+                                   (dgrab.waferSize / 2) * Math.Cos(dgrab.notch) + offsetCenterY);
 
-            //Draw the color on the points
+
+            //Draw the color on the points 
             for (int i = 0; i < X.Length; i++)
             {
                 int r = 0;
                 int b = 0;
                 int g = 0;
+
+                //Creates our color (if we don't get information on what color to use)
                 HsvToRgb((int)col[i] % 125, 60, 45, out r, out g, out b);
 
                 if (confg != null)
@@ -95,6 +115,7 @@ namespace KLARFOxyPlot
                 }
             }
         }
+
 
         public void HsvToRgb(double h, double S, double V, out int r, out int g, out int b)
         {
