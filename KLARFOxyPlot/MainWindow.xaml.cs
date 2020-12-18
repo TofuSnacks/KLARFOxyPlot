@@ -56,6 +56,10 @@ namespace KLARFOxyPlot
             {
                 confg = new ConfigGrabber(openFileDialog.FileName);
                 LoadConfig.Content = "Config file loaded! \n(Click to load a different one)";
+                xOffset = confg.xStarterOffset;
+                yOffset = confg.yStarterOffset;
+                XOffsetBox.Text = "" + xOffset;
+                YOffsetBox.Text = "" + yOffset;
             }
         }
 
@@ -118,7 +122,7 @@ namespace KLARFOxyPlot
             MainPlot.plt.PlotPolygon(xs, ys, lineColor: System.Drawing.Color.Black, fillColor: System.Drawing.Color.DarkGray);
 
             //This plots points that will be written over later. The reason we do this is because sph lets us highlight points we click on (and they need to be plotted this way)
-            sph = MainPlot.plt.PlotScatterHighlight(X, Y, markerSize: markSize, lineWidth: 0, markerShape: MarkerShape.filledSquare, highlightedMarkerSize: 20, highlightedShape: MarkerShape.openSquare, errorLineWidth: 100);
+            sph = MainPlot.plt.PlotScatterHighlight(X, Y, markerSize: markSize, lineWidth: 0, markerShape: MarkerShape.filledSquare, highlightedMarkerSize: 20, highlightedShape: MarkerShape.openSquare, highlightedColor: System.Drawing.Color.Black);
 
 
 
@@ -336,13 +340,13 @@ namespace KLARFOxyPlot
             }
         }
         //Code for double clicking on the table and having a point highlighted, doesnt work because clicking on the table brings up the edit prompt (so we cant double click)
-        /*private void DGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void DGrid_MouseRightClick(object sender, MouseButtonEventArgs e)
         {
             sph.HighlightClear();
             //Get the x and y
             DataTable curTable = (DataTable)DGrid.DataContext;
             DataRow curRow = curTable.Rows[DGrid.SelectedIndex];
             sph.HighlightPointNearest((double)curRow["CalcX"], (double)curRow["CalcY"]);
-        }*/
+        }
     }
 }
