@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using System.Text.RegularExpressions;
 
 namespace KLARFOxyPlot
 {
@@ -25,11 +24,16 @@ namespace KLARFOxyPlot
         {
             InitializeComponent();
             DataContext = this;
+
             //We try to load in a config file, this should be where the .exe is
             try
             {
                 confg = new ConfigGrabber("config.xml");
                 LoadConfig.Content = "Config file loaded! \n(Click to load a different one)";
+                xOffset = confg.xStarterOffset;
+                yOffset = confg.yStarterOffset;
+                XOffsetBox.Text = ""+xOffset;
+                YOffsetBox.Text = ""+yOffset;
             }
             catch (FileNotFoundException e)
             {
@@ -42,7 +46,7 @@ namespace KLARFOxyPlot
             grap = new GraphWindow(dgrab, MainPlot, confg, xOffset, yOffset);
             grap.Show();
             //Changes our datagrid size for better viewing
-            DGrid.Margin = new System.Windows.Thickness(0, 150, 0, 0);
+            //DGrid.Margin = new System.Windows.Thickness(0, 150, 0, 0);
         }
 
         private void btnOpenFile_ClickConfig(object sender, RoutedEventArgs e)
@@ -60,6 +64,7 @@ namespace KLARFOxyPlot
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {
+                btnOpenFile_ClickClear(sender, e);
                 dgrab = new DataGrabber(openFileDialog.FileName);
 
                 PopOut.IsEnabled = true;
@@ -72,16 +77,24 @@ namespace KLARFOxyPlot
 
                 dtb = dgrab.df.ToDataTable();
                 DGrid.DataContext = dtb;
+
             }
+        }
+
+        private void graphMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
         }
 
         private void btnOpenFile_ClickClear(object sender, RoutedEventArgs e)
         {
+            
             MainPlot.plt.Clear();
             MainPlot.Render();
             //Resets our datagrid size since the user may want to look at the graph
             DGrid.Margin = new System.Windows.Thickness(0, 369, 0, 0);
             DGrid.DataContext = null;
+            PopOut.IsEnabled = false;
             dgrab = null;
         }
 
@@ -105,7 +118,7 @@ namespace KLARFOxyPlot
             MainPlot.plt.PlotPolygon(xs, ys, lineColor: System.Drawing.Color.Black, fillColor: System.Drawing.Color.DarkGray);
 
             //This plots points that will be written over later. The reason we do this is because sph lets us highlight points we click on (and they need to be plotted this way)
-            sph = MainPlot.plt.PlotScatterHighlight(X, Y, markerSize: markSize, lineWidth: 0, markerShape: MarkerShape.filledSquare);
+            sph = MainPlot.plt.PlotScatterHighlight(X, Y, markerSize: markSize, lineWidth: 0, markerShape: MarkerShape.filledSquare, highlightedMarkerSize: 20, highlightedShape: MarkerShape.openSquare, errorLineWidth: 100);
 
 
 
@@ -131,10 +144,10 @@ namespace KLARFOxyPlot
                 }
             }
             //Draw the notch (WE DONT DRAW A TRIANGLE OR A SHAPE BECAUSE IT WOULD IMPLY THAT WE KNOW THE NOTCH SIZE WHICH WE DONT KNOW) 
-            MainPlot.plt.PlotArrow((dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Sin(dgrab.notch)  + offsetCenterX, 
-                                   (dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Cos(dgrab.notch)  + offsetCenterY,
-                                   (dgrab.waferSize / 2) * Math.Sin(dgrab.notch) + offsetCenterX,
-                                   (dgrab.waferSize / 2) * Math.Cos(dgrab.notch) + offsetCenterY) ;
+            MainPlot.plt.PlotArrow((dgrab.waferSize / 2) * Math.Sin(dgrab.notch) + offsetCenterX,
+                                   (dgrab.waferSize / 2) * Math.Cos(dgrab.notch) + offsetCenterY,
+                                   (dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Sin(dgrab.notch)  + offsetCenterX, 
+                                   (dgrab.waferSize / 2 + dgrab.waferSize / 30) * Math.Cos(dgrab.notch)  + offsetCenterY);
 
 
             //Draw the color on the points 
@@ -322,5 +335,14 @@ namespace KLARFOxyPlot
                 MainPlot.Render();
             }
         }
+        //Code for double clicking on the table and having a point highlighted, doesnt work because clicking on the table brings up the edit prompt (so we cant double click)
+        /*private void DGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            sph.HighlightClear();
+            //Get the x and y
+            DataTable curTable = (DataTable)DGrid.DataContext;
+            DataRow curRow = curTable.Rows[DGrid.SelectedIndex];
+            sph.HighlightPointNearest((double)curRow["CalcX"], (double)curRow["CalcY"]);
+        }*/
     }
 }

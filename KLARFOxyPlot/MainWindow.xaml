@@ -20,10 +20,10 @@
         <Button Name="GetFile" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_Click" Width="180" Height="40" Margin="10,64,0,0"/>
         <Button Name="PopOut" Content="Pop Graph Out" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickPop" Width="180" Height="40" Margin="10,121,0,0" IsEnabled="False"/>
         <Viewbox Margin="160,0,0,215" Stretch="Uniform">
-            <WpfPlot Name="MainPlot" Height="420" Width="420" MouseDoubleClick="plotMouseDoubleClick" />
-
+            <WpfPlot Name="MainPlot" Height="420" Width="420" MouseDoubleClick="plotMouseDoubleClick" MouseRightButtonDown="graphMouseRightButtonDown"/>
+              
         </Viewbox>
-        <DataGrid x:Name="DGrid" Margin="0,369,0,0" AutoGenerateColumns="True" ItemsSource="{Binding}" />
+        <DataGrid x:Name="DGrid" Margin="0,0,0,0" AutoGenerateColumns="True" ItemsSource="{Binding}" MaxHeight="250" VerticalAlignment="Bottom" Height="210" />
         <Button x:Name="LoadConfig" Content="Load Config File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickConfig" Width="180" Height="40" Margin="10,10,0,0" IsEnabled="True"/>
         <Button x:Name="ClearButton" Content="Clear the Graph" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnOpenFile_ClickClear" Width="180" Height="40" Margin="10,185,0,0" IsEnabled="True"/>
         <TextBlock HorizontalAlignment="Left" Margin="10,243,0,0" Text="XOffset:" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" Height="20"/>
